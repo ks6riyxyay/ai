@@ -1,13 +1,7 @@
 {
   "name": "ia-bytez-vercel",
   "version": "1.0.0",
-  "description": "Projeto com backend e frontend usando bytez.js na Vercel.",
   "type": "module",
-  "scripts": {
-    "dev": "vercel dev",
-    "build": "echo 'Vercel cuida do build automaticamente'",
-    "start": "vercel dev"
-  },
   "dependencies": {
     "bytez.js": "^1.0.0"
   }
