@@ -1,125 +1,71 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vilor AI</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-        h1 { color: #5c67f2; text-align: center; }
-        label { display: block; margin: 10px 0 5px; font-weight: bold; }
-        select, textarea, button { width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
-        button { background-color: #5c67f2; color: white; border: none; cursor: pointer; transition: background-color 0.3s; }
-        button:hover { background-color: #4a54e1; }
-        .result-box { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 4px; background-color: #e9ecef; white-space: pre-wrap; word-wrap: break-word; min-height: 50px; }
-        .error-message { color: red; font-weight: bold; }
-        .success-message { color: green; font-weight: bold; }
-        .loading-text { font-style: italic; color: #555; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Escravo AI</title>
+  <link rel="stylesheet" href="public/style.css">
 </head>
+
 <body>
 
-<div class="container">
-    <h1>Vilor AI</h1>
+<div class="box">
+  <h2>Escravo AI</h2>
 
-    <form id="ai-form">
-        <label for="model-type">Selecione o Tipo de Geração:</label>
-        <select id="model-type" required>
-            <option value="text">Texto </option>
-            <option value="image">Imagem </option>
-            <option value="video">Vídeo </option>
-        </select>
+  <label>Modelo:</label>
+  <select id="model">
+    <option value="openai-community/gpt2">GPT-2 (Texto)</option>
+    <option value="SG161222/RealVisXL_V5.0">RealVisXL V5 (Imagem)</option>
+    <option value="vdo/text-to-video-ms-1.7b">Text-to-Video 1.7B</option>
+  </select>
 
-        <label for="prompt">Insira seu Prompt (Descrição):</label>
-        <textarea id="prompt" rows="3" placeholder="Ex: Um gato com chapéu de bruxo na rua..." required></textarea>
+  <label>Prompt:</label>
+  <textarea id="prompt" placeholder="Escreva seu prompt..."></textarea>
 
-        <button type="submit">Gerar Conteúdo</button>
-    </form>
+  <button id="run">Executar IA</button>
 
-    <div id="loading" style="text-align: center; display: none;">
-        <p class="loading-text">Aguardando resultado... (Pode levar um tempo para vídeos e imagens)</p>
-    </div>
-
-    <h2>Resultado:</h2>
-    <div id="result" class="result-box">
-        O resultado da IA aparecerá aqui.
-    </div>
+  <div id="result"></div>
 </div>
 
+
 <script>
-    const form = document.getElementById('ai-form');
-    const resultDiv = document.getElementById('result');
-    const loadingDiv = document.getElementById('loading');
-    
-    // Caminho relativo para a função serverless no mesmo deployment Vercel
-    const API_ENDPOINT = '/api/ai'; 
+document.getElementById("run").onclick = async () => {
+  const model = document.getElementById("model").value;
+  const prompt = document.getElementById("prompt").value;
+  const result = document.getElementById("result");
 
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
+  result.innerHTML = "<p>🔄 Processando...</p>";
 
-        const type = document.getElementById('model-type').value;
-        const prompt = document.getElementById('prompt').value;
+  const res = await fetch("/api/ia", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model, prompt })
+  });
 
-        resultDiv.innerHTML = 'Preparando requisição...';
-        loadingDiv.style.display = 'block';
+  const data = await res.json();
 
-        try {
-            const response = await fetch(API_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ type, prompt }),
-            });
+  if (data.error) {
+    result.innerHTML = `<p style="color:red;">Erro: ${data.error}</p>`;
+    return;
+  }
 
-            const data = await response.json();
+  // Texto
+  if (typeof data.output === "string") {
+    result.innerHTML = `<pre>${data.output}</pre>`;
+    return;
+  }
 
-            loadingDiv.style.display = 'none';
+  // Imagem ou Vídeo
+  if (data.output.url) {
+    if (data.output.url.endsWith(".mp4")) {
+      result.innerHTML = `<video controls width="400" src="${data.output.url}"></video>`;
+    } else {
+      result.innerHTML = `<img width="400" src="${data.output.url}" />`;
+    }
+    return;
+  }
 
-            if (!response.ok || data.error) {
-                const errorMessage = data.error || 'Erro desconhecido na API.';
-                resultDiv.className = 'result-box error-message';
-                resultDiv.innerHTML = `⚠️ Erro na API: ${errorMessage}`;
-                return;
-            }
-            
-            resultDiv.className = 'result-box success-message';
-            
-            const outputContent = data.output.url || data.output; 
-
-            switch (type) {
-                case 'text':
-                    resultDiv.innerHTML = `<p>✅ **Texto Gerado (GPT-2):**</p>${outputContent}`;
-                    break;
-                case 'image':
-                    resultDiv.innerHTML = `
-                        <p>✅ **Imagem Gerada (RealVisXL):**</p>
-                        <img src="${outputContent}" alt="${prompt}" style="max-width: 100%; height: auto; display: block; margin-top: 10px;">
-                        <p style="font-size: 0.8em; margin-top: 5px;">URL: <a href="${outputContent}" target="_blank">Abrir Imagem</a></p>
-                    `;
-                    break;
-                case 'video':
-                    resultDiv.innerHTML = `
-                        <p>✅ **Vídeo Gerado (Text-to-Video):**</p>
-                        <video controls style="max-width: 100%; display: block; margin-top: 10px;">
-                            <source src="${outputContent}" type="video/mp4">
-                            Seu navegador não suporta a tag de vídeo.
-                        </video>
-                        <p style="font-size: 0.8em; margin-top: 5px;">URL: <a href="${outputContent}" target="_blank">Abrir Vídeo</a></p>
-                    `;
-                    break;
-                default:
-                    resultDiv.innerHTML = `Resultado Completo (JSON): ${JSON.stringify(data.output, null, 2)}`;
-                    break;
-            }
-
-        } catch (error) {
-            loadingDiv.style.display = 'none';
-            resultDiv.className = 'result-box error-message';
-            resultDiv.innerHTML = `❌ Erro de Rede/Execução: ${error.message}`;
-        }
-    });
+  result.innerHTML = `<pre>${JSON.stringify(data.output, null, 2)}</pre>`;
+};
 </script>
 
 </body>
