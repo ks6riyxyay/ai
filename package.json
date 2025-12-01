@@ -1,11 +1,5 @@
 {
-  "name": "ia-bytez-vercel",
-  "version": "1.0.0",
-  "description": "Funções serverless para Bytez.js no Vercel",
-  "main": "api/ai.js",
-  "scripts": {
-    "start": "node api/ai.js"
-  },
+  "type": "module",
   "dependencies": {
     "bytez.js": "^1.0.0"
   }
