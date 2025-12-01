@@ -1,9 +1,58 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Escravo AI</title>
-  <link rel="stylesheet" href="public/style.css">
+
+  <style>
+    body {
+      background: #121212;
+      color: white;
+      font-family: Arial;
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+      margin: 0;
+    }
+
+    .box {
+      width: 600px;
+      background: #1e1e1e;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #000;
+    }
+
+    textarea, select, button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+    }
+
+    textarea {
+      height: 120px;
+      background: #111;
+      color: white;
+      resize: none;
+    }
+
+    button {
+      background: #6a00ff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #8a2bff;
+    }
+
+    #result {
+      margin-top: 20px;
+    }
+  </style>
 </head>
 
 <body>
@@ -11,14 +60,14 @@
 <div class="box">
   <h2>Escravo AI</h2>
 
-  <label>Modelo:</label>
+  <label for="model">Modelo:</label>
   <select id="model">
     <option value="openai-community/gpt2">GPT-2 (Texto)</option>
     <option value="SG161222/RealVisXL_V5.0">RealVisXL V5 (Imagem)</option>
     <option value="vdo/text-to-video-ms-1.7b">Text-to-Video 1.7B</option>
   </select>
 
-  <label>Prompt:</label>
+  <label for="prompt">Prompt:</label>
   <textarea id="prompt" placeholder="Escreva seu prompt..."></textarea>
 
   <button id="run">Executar IA</button>
@@ -26,12 +75,16 @@
   <div id="result"></div>
 </div>
 
-
 <script>
 document.getElementById("run").onclick = async () => {
   const model = document.getElementById("model").value;
   const prompt = document.getElementById("prompt").value;
   const result = document.getElementById("result");
+
+  if (!prompt.trim()) {
+    result.innerHTML = `<p style="color:red;">Digite um prompt!</p>`;
+    return;
+  }
 
   result.innerHTML = "<p>🔄 Processando...</p>";
 
@@ -56,10 +109,12 @@ document.getElementById("run").onclick = async () => {
 
   // Imagem ou Vídeo
   if (data.output.url) {
-    if (data.output.url.endsWith(".mp4")) {
-      result.innerHTML = `<video controls width="400" src="${data.output.url}"></video>`;
+    const url = data.output.url;
+
+    if (url.endsWith(".mp4")) {
+      result.innerHTML = `<video controls width="400" src="${url}"></video>`;
     } else {
-      result.innerHTML = `<img width="400" src="${data.output.url}" />`;
+      result.innerHTML = `<img width="400" src="${url}" />`;
     }
     return;
   }
@@ -69,4 +124,4 @@ document.getElementById("run").onclick = async () => {
 </script>
 
 </body>
-</html>
+</html
